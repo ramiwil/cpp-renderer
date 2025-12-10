@@ -1,31 +1,41 @@
 #pragma once
 #include <vector>
 #include <tuple>
+#include <cmath>
 #include "vec3.h"
+#include "object.h"
+#include "ray.h"
 
-class sphere {
+class Sphere : public Object {
     public:
-        vec3 center;
+        Vec3 center;
         float radius;
 
-        sphere(const vec3& center, float radius) : center(center), radius(radius) {}
-        std::tuple<int, vec3, vec3> intersect(const vec3& ray_origin, const vec3& ray_direction) {
-            vec3 l = center - ray_origin;
-            int tca = l.dot(ray_direction);
-            if (tca < 0) {
-                return std::make_tuple(0, vec3(0,0,0), vec3(0,0,0));
+        Sphere(const Vec3& center, float radius) : center(center), radius(radius) {}
+
+        hit_result hit(const Ray& ray) override {
+            Vec3 ray_origin = ray.getOrigin();
+            Vec3 ray_direction = ray.getDirection();
+
+            Vec3 l = center - ray_origin;
+            float tca = l.dot(ray_direction);
+            if (tca < 0.0) {
+                return hit_result{0, Vec3(0), Vec3(0), false};
             }
 
-            float determinant = std::sqrt(l.dot(l) - (tca*tca));
-            float r_squared = this->radius*this->radius;
-            float d_squared = determinant * determinant;
-            float thc = std::sqrt(r_squared - d_squared);
+            float d2 = l.dot(l) - tca * tca;
+            if (d2 > radius * radius) return hit_result{0, Vec3(0), Vec3(0), false};
+            float thc = std::sqrt(radius * radius - d2);
             float t0 = tca - thc;
             float t1 = tca + thc;
 
-            vec3 surface_point = ray_origin + ray_direction * t0;
-            vec3 surface_normal = (surface_point - center) / radius;
+            float t = (t0 > 0) ? t0 : t1;
+            if (t < 0) return hit_result{0, Vec3(0), Vec3(0), false};
 
-            return std::make_tuple(t0, surface_point, surface_normal);
+            Vec3 surface_point = ray_origin + ray_direction * t;
+            Vec3 surface_normal = (surface_point - center).normalize();
+
+
+            return hit_result{t0, surface_point, surface_normal, true};
         }
 };

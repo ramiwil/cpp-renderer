@@ -8,7 +8,7 @@ unsigned char color_to_byte(float c) {
 }
 
 
-void write_color(std::ostream& out, vec3& color) {
+void write_color(std::ostream& out, Vec3& color) {
     out.put(color_to_byte(color.x));
     out.put(color_to_byte(color.y));
     out.put(color_to_byte(color.z));
