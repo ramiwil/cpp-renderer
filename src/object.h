@@ -15,6 +15,8 @@ struct hit_result {
 class Object {
     public:
         Material mat;
+        virtual Material get_material() = 0;
         virtual hit_result hit(const Ray& ray) = 0;
         virtual ~Object() = default;
+
 };

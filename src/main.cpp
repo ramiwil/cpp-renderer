@@ -5,6 +5,7 @@
 #include "utils.h"
 #include "camera.h"
 #include "ray.h"
+#include "scene.h"
 
 constexpr int WIDTH = 512;
 constexpr int HEIGHT = 512;
@@ -28,7 +29,12 @@ int main() {
         HEIGHT
     );
 
-    Sphere sphere(Vec3(0.0f, 0.0f, 0.0f), 1.0f);
+    Material mat_1{Vec3(255.0f, 255.0f, 0.0f)};
+    Material mat_2{Vec3(0.0f, 255.0f, 255.0f)};
+
+    Scene scene;
+    scene.add_object(std::make_unique<Sphere>(mat_1, Vec3(0.0f, 0.0f, 0.0f), 1.0f));
+    scene.add_object(std::make_unique<Sphere>(mat_2, Vec3(0.0f, 1.0f, -2.0f), 1.0f));
 
     for (int y = 0; y < HEIGHT; y++) {
         for (int x = 0; x < WIDTH; x++) {
@@ -36,16 +42,18 @@ int main() {
             float v = float(y) / float(HEIGHT - 1); // normalized coordinates
 
             Ray ray = camera.generate_ray(u, v);
+            Vec3 pixel_color(0.0f, 0.0f, 0.0f);
+            float closest_hit = std::numeric_limits<float>::max();
 
-            hit_result hit = sphere.hit(ray);
-
-            if (hit.hit == true) {
-                Vec3 color = Vec3(255.0f, 0.0f, 0.0f);
-                write_color(render, color);
-            } else {
-                Vec3 color = Vec3(0.0f, 0.0f, 0.0f);
-                write_color(render, color);
+            for (auto &obj : scene.objects) {
+                hit_result result = obj->hit(ray); 
+                if (result.hit && (result.t < closest_hit)) {
+                    closest_hit = result.t;
+                    pixel_color = obj->get_material().color;
+                }
             }
+
+            write_color(render, pixel_color);
         }
     }
 

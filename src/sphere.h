@@ -5,13 +5,19 @@
 #include "vec3.h"
 #include "object.h"
 #include "ray.h"
+#include "material.h"
 
 class Sphere : public Object {
     public:
+        Material mat;
         Vec3 center;
         float radius;
 
-        Sphere(const Vec3& center, float radius) : center(center), radius(radius) {}
+        Sphere(const Material& mat, const Vec3& center, float radius) : mat(mat), center(center), radius(radius) {}
+        
+        Material get_material() override {
+            return mat;
+        }
 
         hit_result hit(const Ray& ray) override {
             Vec3 ray_origin = ray.getOrigin();
