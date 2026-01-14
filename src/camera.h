@@ -20,8 +20,12 @@ class Camera {
         };
 
         Ray generate_ray(float x, float y) const {
-            float u = (2 * x - 1) ;
-            float v = 1 - 2 * y;
+            float theta = fov * M_PI / 100.0f;
+            float half_height = std::tan(theta / 2.0f);
+            float half_width = aspect_ratio * half_height;
+
+            float u = (2 * x - 1) * half_width;
+            float v = (1 - 2 * y) * half_height;
 
             Vec3 ray_direction = (forward + (right*u) + (camera_up*v)).normalize();
             return Ray(position, ray_direction);

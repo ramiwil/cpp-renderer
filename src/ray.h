@@ -13,11 +13,23 @@ class Ray {
             return origin + direction * t;
         }
 
-        Vec3 getOrigin() const {
+        Vec3 get_origin() const {
             return origin;
         };
 
-        Vec3 getDirection() const {
+        Vec3 get_direction() const {
             return direction;
         };
+
+        Vec3 get_negative_direction() const {
+            return Vec3(
+                -direction.x,
+                -direction.y,
+                -direction.z
+            );
+        };
+
+        Vec3 operator-() const {
+            return -direction;  // returns opposite of direction
+        }
 };

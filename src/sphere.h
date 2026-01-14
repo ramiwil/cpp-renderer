@@ -20,8 +20,8 @@ class Sphere : public Object {
         }
 
         hit_result hit(const Ray& ray) override {
-            Vec3 ray_origin = ray.getOrigin();
-            Vec3 ray_direction = ray.getDirection();
+            Vec3 ray_origin = ray.get_origin();
+            Vec3 ray_direction = ray.get_direction();
 
             Vec3 l = center - ray_origin;
             float tca = l.dot(ray_direction);
