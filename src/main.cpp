@@ -2,13 +2,14 @@
 #include <fstream>
 #include "vec3.h"
 #include "sphere.h"
+#include "planes.h"
 #include "utils.h"
 #include "camera.h"
 #include "ray.h"
 #include "scene.h"
 
-constexpr int WIDTH = 512;
-constexpr int HEIGHT = 512;
+constexpr int WIDTH = 1024;
+constexpr int HEIGHT = 1024;
 
 void debug(const Vec3& vec) {
     std::cout << vec.x << ' ' << vec.y << ' ' << vec.z << std::endl;
@@ -24,14 +25,13 @@ Vec3 compute_color(Vec3 hit_point, Vec3 hit_normal, Vec3 view_dir, Material mat,
     shade += ambient;
 
     constexpr float EPS = 1e-4;
-    Vec3 shadow_origin = hit_point + hit_normal + EPS;
+    Vec3 shadow_origin = hit_point + hit_normal * EPS;
 
     for (auto &light: sc.lights) {
         Vec3 to_light = light->get_position() - hit_point;
         float light_distance = to_light.length();
         Vec3 light_dir = to_light / light_distance;
         float attenuation = 1.0f / (light_distance * light_distance);
-
 
         Ray shadow_ray(shadow_origin, light_dir);
 
@@ -76,21 +76,29 @@ int main() {
     render << "P6\n" << WIDTH << " " << HEIGHT << "\n255\n";
 
     Camera camera(
-        Vec3(0.0f, 5.0f, -10.0),    // position
+        Vec3(0.0f, 0.0f, -200.0),    // position
         Vec3(0.0f, 0.0f, 5.0f),     // target
         Vec3(0.0f, 1.0f, 0.0f),     // up
-        45.0f,                      // fov
+        39.3f,                      // fov
         WIDTH,
         HEIGHT
     );
 
     Material mat_1{Vec3(1.0f, 0.0f, 0.0f)};
     Material mat_2{Vec3(0.0f, 1.0f, 1.0f)};
+    Material mat_3{Vec3(1.0f, 1.0f, 1.0f)};
 
     Scene scene;
-    scene.add_object(std::make_unique<Sphere>(mat_1, Vec3(0.0f, 0.0f, 0.0f), 2.0f));
-    scene.add_object(std::make_unique<Sphere>(mat_2, Vec3(1.0f, 2.0f, 0.0f), 1.0f));
-    scene.add_light(std::make_unique<Light>(Vec3(-1.0f, 3.0f, 0.0f), 2.5f));
+    scene.add_object(std::make_unique<Sphere>(mat_1, Vec3(0.0f, 0.0f, 0.0f), 10.0f));
+    scene.add_object(std::make_unique<Sphere>(mat_2, Vec3(-10.0f, 10.0f, 0.0f), 3.0f));
+
+
+    // box
+    float size = 100.0f;
+    scene.add_object(std::make_unique<XZRect>(mat_3, Vec3(0.0, -(size / 2.0), 0.0), size, size)); // bottom
+    scene.add_object(std::make_unique<XZRect>(mat_3, Vec3(0.0, (size / 2.0), 0.0), size, size)); // top
+
+    scene.add_light(std::make_unique<Light>(Vec3(0.0f, (size / 2.0)-1.0, 0.0f), 1000.0f));
 
     for (int y = 0; y < HEIGHT; y++) {
         for (int x = 0; x < WIDTH; x++) {

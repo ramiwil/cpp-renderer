@@ -41,7 +41,6 @@ class Sphere : public Object {
             Vec3 surface_point = ray_origin + ray_direction * t;
             Vec3 surface_normal = (surface_point - center).normalize();
 
-
-            return hit_result{t0, surface_point, surface_normal, true};
+            return hit_result{t, surface_point, surface_normal, true};
         }
 };

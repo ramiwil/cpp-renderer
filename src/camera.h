@@ -20,7 +20,7 @@ class Camera {
         };
 
         Ray generate_ray(float x, float y) const {
-            float theta = fov * M_PI / 100.0f;
+            float theta = fov * M_PI / 180.0f;
             float half_height = std::tan(theta / 2.0f);
             float half_width = aspect_ratio * half_height;
 
