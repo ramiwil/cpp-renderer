@@ -1,11 +1,12 @@
 #pragma once
-#include <vector>
 #include <memory>
-#include "object.h"
-#include "light.h"
+#include <vector>
+
+#include "primitives/object.h"
+#include "scene/light.h"
 
 class Scene {
-public:
+  public:
     std::vector<std::unique_ptr<Object>> objects;
     std::vector<std::unique_ptr<Light>> lights;
 

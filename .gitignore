@@ -2,4 +2,5 @@
 .*/
 _*
 _*/
-rt
+build/
+_build/

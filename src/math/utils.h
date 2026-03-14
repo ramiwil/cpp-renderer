@@ -1,8 +1,10 @@
+#pragma once
 #include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <random>
-#include "vec3.h"
+
+#include "math/vec3.h"
 
 static thread_local std::mt19937 rng(std::random_device{}());
 static thread_local std::uniform_real_distribution<float> dist(-1.0f, 1.0f);
@@ -13,8 +15,7 @@ unsigned char color_to_byte(float c) {
     return static_cast<unsigned char>(gamma_corrected * 255.0f);
 }
 
-
-void write_color(std::ostream& out, Vec3& color) {
+void write_color(std::ostream &out, Vec3 &color) {
     out.put(color_to_byte(color.x));
     out.put(color_to_byte(color.y));
     out.put(color_to_byte(color.z));

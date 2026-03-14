@@ -1,5 +1,5 @@
 #pragma once
-#include "vec3.h"
+#include "math/vec3.h"
 
 struct Material {
     Vec3 color{1.0f};
