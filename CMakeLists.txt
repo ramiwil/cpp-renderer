@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(raytracer LANGUAGES CXX)
+project(pathtracer LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -19,18 +19,19 @@ endif()
 
 find_package(OpenMP REQUIRED)
 
-add_executable(raytracer src/main.cpp)
+add_executable(pathtracer src/main.cpp)
 
-target_include_directories(raytracer PRIVATE src vendor)
+target_include_directories(pathtracer PRIVATE src)
+target_include_directories(pathtracer SYSTEM PRIVATE vendor)
 
-target_compile_options(raytracer PRIVATE -Wall -Wextra -O2)
+target_compile_options(pathtracer PRIVATE -Wall -Wextra -O2)
 
-target_link_libraries(raytracer PRIVATE OpenMP::OpenMP_CXX)
+target_link_libraries(pathtracer PRIVATE OpenMP::OpenMP_CXX)
 
 # Run target
 add_custom_target(run
-    COMMAND raytracer
-    DEPENDS raytracer
+    COMMAND pathtracer
+    DEPENDS pathtracer
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 

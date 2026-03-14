@@ -12,8 +12,6 @@ class Camera {
           target(target),
           world_up(world_up),
           fov(fov),
-          width(width),
-          height(height),
           aspect_ratio(float(width) / float(height)),
           camera_up(0.0f),
           forward(0.0f),
@@ -45,12 +43,10 @@ class Camera {
     Vec3 target;
     Vec3 world_up;
 
+    float fov;
+    float aspect_ratio;
+
     Vec3 camera_up;
     Vec3 forward;
     Vec3 right;
-
-    float fov;
-    int width;
-    int height;
-    float aspect_ratio;
 };
