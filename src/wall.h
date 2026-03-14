@@ -7,14 +7,14 @@
 #include "ray.h"
 #include "material.h"
 
-class XZRect : public Object {
+class YZRect : public Object {
     public:
         Material mat;
         Vec3 center;
         float l;
         float w;
 
-        XZRect(const Material& mat, const Vec3& center, float l, float w): mat(mat), center(center), l(l), w(w) {}
+        YZRect(const Material& mat, const Vec3& center, float l, float w): mat(mat), center(center), l(l), w(w) {}
 
         Material get_material() override {
             return mat;
@@ -24,8 +24,8 @@ class XZRect : public Object {
             Vec3 ray_origin = ray.get_origin();
             Vec3 ray_direction = ray.get_direction();
             
-            float numerator = center.y - ray_origin.y;
-            float denom = ray_direction.y;
+            float numerator = center.x - ray_origin.x;
+            float denom = ray_direction.x;
             
             if (denom == 0) return hit_result{0, Vec3(0), Vec3(0), false};
 
@@ -35,11 +35,11 @@ class XZRect : public Object {
             Vec3 surface_point = ray_origin + ray_direction * t;
 
             float half_l = l / 2, half_w = w / 2;
-            if (surface_point.x < center.x - half_l || surface_point.x > center.x + half_l ||
+            if (surface_point.y < center.y - half_l || surface_point.y > center.y + half_l ||
                 surface_point.z < center.z - half_w || surface_point.z > center.z + half_w)
                 return hit_result{0, Vec3(0), Vec3(0), false};
 
-            Vec3 normal = (denom > 0) ? Vec3(0, -1, 0) : Vec3(0, 1, 0);
+            Vec3 normal = (denom > 0) ? Vec3(-1, 0, 0) : Vec3(1, 0, 0);
             return hit_result{t, surface_point, normal, true};
         }
 };

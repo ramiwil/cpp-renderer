@@ -1,8 +1,13 @@
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
+#include <omp.h>
+#include "object.h"
 #include "vec3.h"
 #include "sphere.h"
+#include "back_wall.h"
 #include "planes.h"
+#include "wall.h"
 #include "utils.h"
 #include "camera.h"
 #include "ray.h"
@@ -66,6 +71,66 @@ Vec3 compute_color(Vec3 hit_point, Vec3 hit_normal, Vec3 view_dir, Material mat,
     return shade * mat.color;
 }
 
+Vec3 trace(Ray ray, const Scene& sc, int depth) {
+    if (depth == 0) return Vec3{0.0f};
+
+    hit_result closest;
+    Object* closest_obj = nullptr;
+    float min_t = std::numeric_limits<float>::max();
+    for (auto& obj : sc.objects) {
+        auto res = obj->hit(ray);
+        if (res.hit && res.t < min_t) { 
+            min_t = res.t; 
+            closest = res; 
+            closest_obj = obj.get(); 
+        }
+    }
+
+    if (!closest_obj) return Vec3{0.0f};
+
+    Material mat = closest_obj->get_material();
+    Vec3 emitted = mat.emission * mat.emission_strength;
+
+    // randome diffuse bounce
+    constexpr float EPS = 1e-4;
+    Vec3 bounce_dir = random_dir(closest.normal);
+    Ray bounce_ray(closest.point + closest.normal * EPS, bounce_dir);
+
+    return emitted + mat.color * trace(bounce_ray, sc, depth - 1);
+}
+
+Scene build_scene() {
+    Scene sc;
+
+    Material mat_1{Vec3(1.0f, 0.0f, 0.0f)};
+    Material mat_2{Vec3(0.0f, 1.0f, 1.0f)};
+    Material mat_3{Vec3(1.0f, 1.0f, 1.0f)};
+    mat_3.emission = Vec3(1.0f, 1.0f, 1.0f);
+    mat_3.emission_strength = 5.0f;
+
+    sc.add_object(std::make_unique<Sphere>(mat_1, Vec3(0.0f, -40.0f, 0.0f), 10.0f));
+    sc.add_object(std::make_unique<Sphere>(mat_2, Vec3(-10.0f, -40.0f, 0.0f), 3.0f));
+
+    // box
+    float size = 100.0f;
+    sc.add_object(std::make_unique<XZRect>(mat_3, Vec3(0.0, (size / 2.0) - 1.0, 0.0), 35.0f, 35.0f));
+
+    sc.add_object(std::make_unique<XZRect>(Material{}, Vec3(0.0, (size / 2.0), 0.0), size, size)); // top
+    sc.add_object(std::make_unique<XZRect>(Material{}, Vec3(0.0, -(size / 2.0), 0.0), size, size)); // bottom
+
+    sc.add_object(std::make_unique<YXRect>(Material{}, Vec3(0.0, 0.0, (size / 2.0)), size, size)); // back wall
+
+    Material wall_1{};
+    wall_1.color = Vec3(1.0f, 0.0f, 0.0f);
+    sc.add_object(std::make_unique<YZRect>(wall_1, Vec3((size / 2.0), 0.0f, 0.0f), size, size));
+
+    Material wall_2{};
+    wall_2.color = Vec3(0.0f, 1.0f, 0.0f);
+    sc.add_object(std::make_unique<YZRect>(wall_2, Vec3(-(size / 2.0), 0.0f, 0.0f), size, size));
+
+    return sc;
+}
+
 int main() {
     std::ofstream render("../renders/output.ppm", std::ios::binary);
     if (!render) {
@@ -84,49 +149,48 @@ int main() {
         HEIGHT
     );
 
-    Material mat_1{Vec3(1.0f, 0.0f, 0.0f)};
-    Material mat_2{Vec3(0.0f, 1.0f, 1.0f)};
-    Material mat_3{Vec3(1.0f, 1.0f, 1.0f)};
+    Scene scene = build_scene();
 
-    Scene scene;
-    scene.add_object(std::make_unique<Sphere>(mat_1, Vec3(0.0f, 0.0f, 0.0f), 10.0f));
-    scene.add_object(std::make_unique<Sphere>(mat_2, Vec3(-10.0f, 10.0f, 0.0f), 3.0f));
+    std::vector<Vec3> framebuffer(WIDTH * HEIGHT);
 
-
-    // box
-    float size = 100.0f;
-    scene.add_object(std::make_unique<XZRect>(mat_3, Vec3(0.0, -(size / 2.0), 0.0), size, size)); // bottom
-    scene.add_object(std::make_unique<XZRect>(mat_3, Vec3(0.0, (size / 2.0), 0.0), size, size)); // top
-
-    scene.add_light(std::make_unique<Light>(Vec3(0.0f, (size / 2.0)-1.0, 0.0f), 1000.0f));
-
+    # pragma omp parallel for num_threads(16)
     for (int y = 0; y < HEIGHT; y++) {
         for (int x = 0; x < WIDTH; x++) {
-            float u = float(x) / float(WIDTH - 1); // normalized coordinates
-            float v = float(y) / float(HEIGHT - 1); // normalized coordinates
-
-            Ray ray = camera.generate_ray(u, v);
-            Vec3 shade(0.0f);
             Vec3 pixel_color(0.0f);
-            float closest_hit = std::numeric_limits<float>::max();
-
-            for (auto &obj : scene.objects) {
-                hit_result result = obj->hit(ray); 
-                if (result.hit && (result.t < closest_hit)) {
-                    closest_hit = result.t;
-                    Material mat = obj->get_material();
-                    
-                    pixel_color = compute_color(
-                        result.point, 
-                        result.normal, 
-                        ray.get_direction(), 
-                        mat, 
-                        scene
-                    );
-                }
+            int samples = 128;
+            int depth = 8;
+            for (int s = 0; s < samples; s++) {
+                float u = (x + rand_float()) / float(WIDTH);
+                float v = (y + rand_float()) / float(HEIGHT);
+                Ray ray = camera.generate_ray(u, v);
+                pixel_color += trace(ray, scene, depth);
             }
-            write_color(render, pixel_color);
+            pixel_color /= samples; // average number of samples
+            framebuffer[y*WIDTH+x] = pixel_color;
+
+            // float closest_hit = std::numeric_limits<float>::max();
+            // Vec3 shade(0.0f);
+            // for (auto &obj : scene.objects) {
+            //     hit_result result = obj->hit(ray); 
+            //     if (result.hit && (result.t < closest_hit)) {
+            //         closest_hit = result.t;
+            //         Material mat = obj->get_material();
+                    
+            //         pixel_color = compute_color(
+            //             result.point, 
+            //             result.normal, 
+            //             ray.get_direction(), 
+            //             mat, 
+            //             scene
+            //         );
+            //     }
+            // }
+            // write_color(render, pixel_color);
         }
+    }
+
+    for (auto& color : framebuffer) {
+        write_color(render, color);
     }
 
     return 0;

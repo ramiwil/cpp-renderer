@@ -4,6 +4,7 @@
 class Vec3 {
     public:
         float x, y, z;
+        Vec3() : x(0.0f), y(0.0f), z(0.0f) {}
         Vec3(float x, float y, float z) : x(x), y(y), z(z) {}
         Vec3(float value) : x(value), y(value), z(value) {}
 
@@ -15,6 +16,12 @@ class Vec3 {
             x = x + other.x;
             y = y + other.y;
             z = z + other.z;
+        }
+
+        void operator/=(float scalar) {
+            x /= scalar;
+            y /= scalar;
+            z /= scalar;
         }
 
         Vec3 operator-(const Vec3& other) const {
