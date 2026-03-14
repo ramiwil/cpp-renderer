@@ -2,7 +2,7 @@
 
 A physically-based path tracer built from scratch in C++ to learn rendering theory and build a foundation for advanced path tracing techniques and graphics research.
 
-![Cornell box render](renders/output.png)
+![Cornell box](renders/output.png)
 
 
 ## Overview

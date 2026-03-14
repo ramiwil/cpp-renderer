@@ -13,8 +13,8 @@
 #include "shading/material.h"
 #include "stb_image_write.h"
 
-constexpr int WIDTH = 2048;
-constexpr int HEIGHT = 2048;
+constexpr int WIDTH = 512;
+constexpr int HEIGHT = 512;
 
 Vec3 trace(Ray ray, const Scene &sc, int depth) {
     if (depth == 0) return Vec3{0.0f};
@@ -99,7 +99,7 @@ int main() {
     for (int y = 0; y < HEIGHT; y++) {
         for (int x = 0; x < WIDTH; x++) {
             Vec3 pixel_color(0.0f);
-            int samples = 128;
+            int samples = 1024;
             int depth = 3;
             for (int s = 0; s < samples; s++) {
                 float u = (x + rand_float()) / float(WIDTH);
