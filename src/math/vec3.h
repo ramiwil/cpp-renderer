@@ -64,3 +64,5 @@ class Vec3 {
 
     float length() const { return std::sqrt(x * x + y * y + z * z); }
 };
+
+inline Vec3 operator*(float scalar, const Vec3 &v) { return v * scalar; }

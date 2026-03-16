@@ -1,3 +1,5 @@
+#include <cmath>
+#include <cstdlib>
 #include <omp.h>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -38,7 +40,14 @@ Vec3 trace(Ray ray, const Scene &sc, int depth) {
 
     // randome diffuse bounce
     constexpr float EPS = 1e-4;
-    Vec3 bounce_dir = random_dir(closest.normal);
+    Vec3 bounce_dir;
+
+    if ((rand() / float(RAND_MAX)) < mat.reflectivity) {
+        float dot_product = ray.get_direction().dot(closest.normal);
+        bounce_dir = (ray.get_direction() - (2 * dot_product * closest.normal)).normalize();
+    } else {
+        bounce_dir = random_dir(closest.normal);
+    }
     Ray bounce_ray(closest.point + closest.normal * EPS, bounce_dir);
 
     return emitted + mat.color * trace(bounce_ray, sc, depth - 1);
@@ -47,14 +56,16 @@ Vec3 trace(Ray ray, const Scene &sc, int depth) {
 Scene build_scene() {
     Scene sc;
 
-    Material mat_1{Vec3(1.0f, 0.0f, 0.0f)};
+    Material mat_1{Vec3(1.0f, 1.0f, 1.0f)};
+    mat_1.reflectivity = 0.1f;
     // Material mat_2{Vec3(0.0f, 1.0f, 1.0f)};
     Material mat_3{Vec3(1.0f, 1.0f, 1.0f)};
     mat_3.emission = Vec3(1.0f, 1.0f, 1.0f);
     mat_3.emission_strength = 20.0f;
 
+    float radius = 18.0f;
     sc.add_object(
-        std::make_unique<Sphere>(mat_1, Vec3(0.0f, -40.0f, 0.0f), 10.0f));
+        std::make_unique<Sphere>(mat_1, Vec3(0.0f, -radius, 0.0f), radius));
     // sc.add_object(
     //     std::make_unique<Sphere>(mat_2, Vec3(-10.0f, -40.0f, 0.0f), 3.0f));
 
@@ -95,12 +106,12 @@ int main() {
 
     std::vector<Vec3> framebuffer(WIDTH * HEIGHT);
 
-#pragma omp parallel for num_threads(16)
+    #pragma omp parallel for schedule(dynamic, 5)
     for (int y = 0; y < HEIGHT; y++) {
         for (int x = 0; x < WIDTH; x++) {
             Vec3 pixel_color(0.0f);
-            int samples = 1024;
-            int depth = 3;
+            int samples = 256;
+            int depth = 4;
             for (int s = 0; s < samples; s++) {
                 float u = (x + rand_float()) / float(WIDTH);
                 float v = (y + rand_float()) / float(HEIGHT);
