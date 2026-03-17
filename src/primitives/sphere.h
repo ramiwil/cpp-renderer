@@ -1,22 +1,15 @@
 #pragma once
 #include <cmath>
-#include <tuple>
-#include <vector>
 
-#include "math/ray.h"
-#include "math/vec3.h"
 #include "primitives/object.h"
-#include "shading/material.h"
 
 class Sphere : public Object {
   public:
     Vec3 center;
     float radius;
 
-    Sphere(const Material &mat, const Vec3 &center, float radius)
+    Sphere(std::shared_ptr<Material> mat, const Vec3 &center, float radius)
         : Object(mat), center(center), radius(radius) {}
-
-    Material get_material() override { return mat; }
 
     hit_result hit(const Ray &ray) override {
         Vec3 ray_origin = ray.get_origin();

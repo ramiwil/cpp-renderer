@@ -1,12 +1,5 @@
 #pragma once
-#include <cmath>
-#include <tuple>
-#include <vector>
-
-#include "math/ray.h"
-#include "math/vec3.h"
 #include "primitives/object.h"
-#include "shading/material.h"
 
 class YXRect : public Object {
   public:
@@ -14,10 +7,8 @@ class YXRect : public Object {
     float l;
     float w;
 
-    YXRect(const Material &mat, const Vec3 &center, float l, float w)
+    YXRect(std::shared_ptr<Material> mat, const Vec3 &center, float l, float w)
         : Object(mat), center(center), l(l), w(w) {}
-
-    Material get_material() override { return mat; }
 
     hit_result hit(const Ray &ray) override {
         float denom = ray.get_direction().z;

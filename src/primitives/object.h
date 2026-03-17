@@ -1,6 +1,5 @@
 #pragma once
-#include <tuple>
-#include <vector>
+#include <memory>
 
 #include "math/ray.h"
 #include "math/vec3.h"
@@ -15,10 +14,9 @@ struct hit_result {
 
 class Object {
   public:
-    Material mat;
-    virtual Material get_material() = 0;
+    std::shared_ptr<Material> mat;
     virtual hit_result hit(const Ray &ray) = 0;
     Object() = default;
-    Object(const Material &mat) : mat(mat) {}
+    Object(std::shared_ptr<Material> mat) : mat(mat) {}
     virtual ~Object() = default;
 };
