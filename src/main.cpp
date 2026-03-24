@@ -4,10 +4,8 @@
 #include "math/ray.h"
 #include "math/utils.cpp"
 #include "math/vec3.h"
-#include "primitives/back_wall.h"
-#include "primitives/planes.h"
+#include "primitives/plane.h"
 #include "primitives/sphere.h"
-#include "primitives/wall.h"
 #include "scene/camera.h"
 #include "scene/scene.h"
 #include "shading/material.h"
@@ -33,6 +31,7 @@ Vec3 trace(Ray ray, const Scene &sc, int depth) {
 
     if (!closest_obj) return Vec3{0.0f};
 
+    // indirect sampling
     Material *mat = closest_obj->mat.get();
     Vec3 emitted = mat->emission * mat->emission_strength;
 
@@ -45,7 +44,7 @@ Vec3 trace(Ray ray, const Scene &sc, int depth) {
     Ray bounce_ray(closest.point + closest.normal * EPS, s.dir);
     Vec3 incoming = trace(bounce_ray, sc, depth - 1);
 
-    // current points color +
+    // current points color
     return emitted + f * incoming * cos_theta / s.pdf;
 }
 
@@ -62,8 +61,8 @@ Scene build_cornell_box() {
     auto mat_light = std::make_shared<LambertianMaterial>(Vec3(1.0f));
     mat_light->emission = Vec3(1.0f);
     mat_light->emission_strength = 20.0f;
-    sc.add_object(std::make_unique<XZRect>(mat_light, Vec3(0.0, 50.0f, 0.0),
-                                           20.0f, 20.0f));
+    sc.add_object(std::make_unique<Plane>(mat_light, Vec3(0.0, 50.0f, 0.0),
+                                          Vec3(0.0, 1.0, 0.0), 20.0f, 20.0f));
 
     // create box walls, floor, and ceiling
     float size = 100.0f;
@@ -71,16 +70,21 @@ Scene build_cornell_box() {
     auto mat_red = std::make_shared<LambertianMaterial>(Vec3(1.0f, 0.0f, 0.0f));
     auto mat_green =
         std::make_shared<LambertianMaterial>(Vec3(0.0f, 1.0f, 0.0f));
-    sc.add_object(std::make_unique<XZRect>(
-        mat_white, Vec3(0.0, size / 2.0, 0.0), size, size));  // ceiling
-    sc.add_object(std::make_unique<XZRect>(
-        mat_white, Vec3(0.0, -size / 2.0, 0.0), size, size));  // floor
-    sc.add_object(std::make_unique<YXRect>(
-        mat_white, Vec3(0.0, 0.0, size / 2.0), size, size));  // back wall
-    sc.add_object(std::make_unique<YZRect>(
-        mat_red, Vec3(size / 2.0, 0.0f, 0.0f), size, size));  // red wall
-    sc.add_object(std::make_unique<YZRect>(
-        mat_green, Vec3(-size / 2.0, 0.0f, 0.0f), size, size));  // green wall
+    sc.add_object(std::make_unique<Plane>(mat_white, Vec3(0.0, size / 2.0, 0.0),
+                                          Vec3(0.0, 1.0, 0.0), size,
+                                          size));  // ceiling
+    sc.add_object(
+        std::make_unique<Plane>(mat_white, Vec3(0.0, -size / 2.0, 0.0),
+                                Vec3(0.0, 1.0, 0.0), size, size));  // floor
+    sc.add_object(std::make_unique<Plane>(mat_white, Vec3(0.0, 0.0, size / 2.0),
+                                          Vec3(0.0, 0.0, 1.0), size,
+                                          size));  // back wall
+    sc.add_object(std::make_unique<Plane>(mat_red, Vec3(size / 2.0, 0.0f, 0.0f),
+                                          Vec3(1.0, 0.0, 0.0), size,
+                                          size));  // red wall
+    sc.add_object(std::make_unique<Plane>(
+        mat_green, Vec3(-size / 2.0, 0.0f, 0.0f), Vec3(1.0, 0.0, 0.0), size,
+        size));  // green wall
 
     return sc;
 }
