@@ -95,7 +95,7 @@ Scene build_cornell_box() {
     auto mat_light = std::make_shared<LambertianMaterial>(Vec3(1.0f));
     mat_light->emission = Vec3(1.0f);
     mat_light->emission_strength = 10.0f;
-    sc.add_light(std::make_unique<Light>(mat_light, Vec3(30.0, 9.9, -40.0),
+    sc.add_light(std::make_unique<Light>(mat_light, Vec3(0.0, 49.9, 0.0),
                                          Vec3(0.0, 1.0, 0.0), 20.0f, 20.0f));
 
     // create box walls, floor, and ceiling
