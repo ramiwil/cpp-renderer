@@ -62,15 +62,18 @@ Vec3 trace(Ray ray, const Scene &sc, int depth) {
             if (cos_surface > 0 && cos_light > 0) {
                 Material *light_mat = light->mat.get();
                 Vec3 Le = light_mat->emission * light_mat->emission_strength;
-                Vec3 f = bxdf->evaluate(closest.normal, dir_to_light, -ray.get_direction());
-                f_direct += f * Le * cos_surface * cos_light / (dist_sq * light->pdf_area());
+                Vec3 f = bxdf->evaluate(closest.normal, dir_to_light,
+                                        -ray.get_direction());
+                f_direct += f * Le * cos_surface * cos_light /
+                            (dist_sq * light->pdf_area());
             }
         }
     }
 
     // indirect sampling
     BxDFSample s = bxdf->sample(closest.normal, -ray.get_direction());
-    Vec3 f_indirect = bxdf->evaluate(closest.normal, s.dir, -ray.get_direction());
+    Vec3 f_indirect =
+        bxdf->evaluate(closest.normal, s.dir, -ray.get_direction());
     float cos_theta = closest.normal.dot(s.dir);
 
     Ray bounce_ray(closest.point + closest.normal * EPS, s.dir);
@@ -93,7 +96,7 @@ Scene build_cornell_box() {
     mat_light->emission = Vec3(1.0f);
     mat_light->emission_strength = 10.0f;
     sc.add_light(std::make_unique<Light>(mat_light, Vec3(30.0, 9.9, -40.0),
-                                          Vec3(0.0, 1.0, 0.0), 20.0f, 20.0f));
+                                         Vec3(0.0, 1.0, 0.0), 20.0f, 20.0f));
 
     // create box walls, floor, and ceiling
     float size = 100.0f;

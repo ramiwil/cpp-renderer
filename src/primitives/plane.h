@@ -11,7 +11,11 @@ class Plane : public Object {
           float l, float w)
         : Object(mat), center(center), normal(normal), l(l), w(w) {}
 
-    Plane() : center(Vec3(0.0, 0.0, 0.0)), normal(Vec3(0.0, 1.0, 0.0)), l(1.0), w(1.0) {};
+    Plane()
+        : center(Vec3(0.0, 0.0, 0.0)),
+          normal(Vec3(0.0, 1.0, 0.0)),
+          l(1.0),
+          w(1.0) {};
 
     hit_result hit(const Ray &ray) override {
         Vec3 ray_origin = ray.get_origin();
@@ -42,6 +46,4 @@ class Plane : public Object {
 
         return hit_result{t, surface_point, norm, true};
     }
-
-    
 };
