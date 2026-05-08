@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
-project(renderer LANGUAGES CXX)
+set(CMAKE_CUDA_HOST_COMPILER g++-15)
+set(CMAKE_CUDA_ARCHITECTURES 89)
+project(renderer LANGUAGES CXX CUDA)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -19,7 +21,7 @@ endif()
 
 find_package(OpenMP REQUIRED)
 
-add_executable(renderer src/main.cpp)
+add_executable(renderer src/main_gpu.cpp src/gpu_render.cu)
 
 target_include_directories(renderer PRIVATE src)
 target_include_directories(renderer SYSTEM PRIVATE vendor)

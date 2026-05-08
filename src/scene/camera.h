@@ -4,9 +4,15 @@
 #include "math/ray.h"
 #include "math/vec3.h"
 
+#ifdef __CUDA_ARCH__
+  #define HD __host__ __device__
+#else
+  #define HD
+#endif
+
 class Camera {
   public:
-    Camera(const Vec3 &position, const Vec3 &target, const Vec3 &world_up,
+    HD Camera(const Vec3 &position, const Vec3 &target, const Vec3 &world_up,
            float fov, int width, int height)
         : position(position),
           target(target),
@@ -19,7 +25,7 @@ class Camera {
         updateBases();
     };
 
-    Ray generate_ray(float x, float y) const {
+    HD Ray generate_ray(float x, float y) const {
         float theta = fov * M_PI / 180.0f;
         float half_height = std::tan(theta / 2.0f);
         float half_width = aspect_ratio * half_height;
@@ -33,7 +39,7 @@ class Camera {
     };
 
   private:
-    void updateBases() {
+    HD void updateBases() {
         forward = (target - position).normalize();
         right = forward.cross(world_up).normalize();
         camera_up = right.cross(forward).normalize();

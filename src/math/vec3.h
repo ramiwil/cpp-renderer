@@ -1,68 +1,74 @@
 #pragma once
 #include <cmath>
 
+#ifdef __CUDA_ARCH__
+  #define HD __host__ __device__
+#else
+  #define HD
+#endif
+
 class Vec3 {
   public:
     float x, y, z;
-    Vec3() : x(0.0f), y(0.0f), z(0.0f) {}
-    Vec3(float x, float y, float z) : x(x), y(y), z(z) {}
-    Vec3(float value) : x(value), y(value), z(value) {}
+    HD Vec3() : x(0.0f), y(0.0f), z(0.0f) {}
+    HD Vec3(float x, float y, float z) : x(x), y(y), z(z) {}
+    HD Vec3(float value) : x(value), y(value), z(value) {}
 
-    Vec3 operator+(const Vec3 &other) const {
+    HD float dot(const Vec3 &other) const {
+        return x * other.x + y * other.y + z * other.z;
+    }
+
+    HD Vec3 cross(const Vec3 &other) const {
+        return Vec3(y * other.z - z * other.y, z * other.x - x * other.z,
+                    x * other.y - y * other.x);
+    }
+
+    HD Vec3 normalize() const {
+        float length = std::sqrt(x * x + y * y + z * z);
+        return Vec3(x / length, y / length, z / length);
+    }
+
+    HD float length() const { return std::sqrt(x * x + y * y + z * z); }
+
+    HD Vec3 operator+(const Vec3 &other) const {
         return Vec3(x + other.x, y + other.y, z + other.z);
     }
 
-    void operator+=(const Vec3 &other) {
+    HD void operator+=(const Vec3 &other) {
         x = x + other.x;
         y = y + other.y;
         z = z + other.z;
     }
 
-    void operator/=(float scalar) {
+    HD void operator/=(float scalar) {
         x /= scalar;
         y /= scalar;
         z /= scalar;
     }
 
-    Vec3 operator-(const Vec3 &other) const {
+    HD Vec3 operator-(const Vec3 &other) const {
         return Vec3(x - other.x, y - other.y, z - other.z);
     }
 
-    Vec3 operator*(const Vec3 &other) const {
+    HD Vec3 operator*(const Vec3 &other) const {
         return Vec3(x * other.x, y * other.y, z * other.z);
     }
 
-    Vec3 operator*(float scalar) const {
+    HD Vec3 operator*(float scalar) const {
         return Vec3(x * scalar, y * scalar, z * scalar);
     }
 
-    Vec3 operator/(float scalar) const {
+    HD Vec3 operator/(float scalar) const {
         return Vec3(x / scalar, y / scalar, z / scalar);
     }
 
-    Vec3 operator+(float scalar) const {
+    HD Vec3 operator+(float scalar) const {
         return Vec3(x + scalar, y + scalar, z + scalar);
     }
 
-    Vec3 operator-() const {
+    HD Vec3 operator-() const {
         return Vec3(-x, -y, -z);  // returns opposite of direction
     }
-
-    float dot(const Vec3 &other) const {
-        return x * other.x + y * other.y + z * other.z;
-    }
-
-    Vec3 cross(const Vec3 &other) const {
-        return Vec3(y * other.z - z * other.y, z * other.x - x * other.z,
-                    x * other.y - y * other.x);
-    }
-
-    Vec3 normalize() const {
-        float length = std::sqrt(x * x + y * y + z * z);
-        return Vec3(x / length, y / length, z / length);
-    }
-
-    float length() const { return std::sqrt(x * x + y * y + z * z); }
 };
 
 inline Vec3 operator*(float scalar, const Vec3 &v) { return v * scalar; }
