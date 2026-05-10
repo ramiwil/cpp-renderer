@@ -13,129 +13,97 @@
 #include "gpu_render.h"
 
 
-Vec3 trace(Ray ray, const Scene &sc, int depth) {
-    if (depth == 0) return Vec3{0.0f};
+std::vector<plane_g> generate_cornell_box() {
+    std::vector<plane_g> ps;
+    float size = 100.0f;
+    plane_g ceiling = {0, 0.0f, size / 2.0f, 0.0f, 0.0f, 1.0f, 0.0f, size, size};
+    ps.emplace_back(ceiling);
 
-    hit_result closest;
-    Object *closest_obj = nullptr;
-    float min_t = std::numeric_limits<float>::max();
-    for (auto &obj : sc.objects) {
-        auto res = obj->hit(ray);
-        if (res.hit && res.t < min_t) {
-            min_t = res.t;
-            closest = res;
-            closest_obj = obj.get();
-        }
-    }
+    plane_g floor = {0, 0.0f, -size / 2.0f, 0.0f, 0.0f, 1.0f, 0.0f, size, size};
+    ps.emplace_back(floor);
 
-    if (!closest_obj) return Vec3{0.0f};
+    plane_g back_wall = {0, 0.0f, 0.0f, size / 2.0f, 0.0f, 0.0f, 1.0f, size, size};
+    ps.emplace_back(back_wall);
 
-    Material *mat = closest_obj->mat.get();
-    Vec3 emitted = mat->emission * mat->emission_strength;
+    plane_g red_wall = {1, size / 2.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, size, size};
+    ps.emplace_back(red_wall);
 
-    constexpr float EPS = 1e-3;
-    BxDF *bxdf = mat->get_bxdf();
-
-    // direct sampling (NEE)
-    Vec3 f_direct(0.0f);
-    for (auto &light : sc.lights) {
-        Vec3 light_point = light->sample();
-        Vec3 to_light = light_point - closest.point;
-        float dist_sq = to_light.dot(to_light);
-        float dist = std::sqrt(dist_sq);
-        Vec3 dir_to_light = to_light / dist;
-
-        Ray shadow_ray(closest.point + closest.normal * EPS, dir_to_light);
-        bool occluded = false;
-        for (auto &obj : sc.objects) {
-            auto res = obj->hit(shadow_ray);
-            if (res.hit && res.t < dist - 2 * EPS) {
-                occluded = true;
-                break;
-            }
-        }
-
-        if (!occluded) {
-            float cos_surface = closest.normal.dot(dir_to_light);
-            float cos_light = light->normal.dot(dir_to_light);
-            if (cos_surface > 0 && cos_light > 0) {
-                Material *light_mat = light->mat.get();
-                Vec3 Le = light_mat->emission * light_mat->emission_strength;
-                Vec3 f = bxdf->evaluate(closest.normal, dir_to_light,
-                                        -ray.get_direction());
-                f_direct += f * Le * cos_surface * cos_light /
-                            (dist_sq * light->pdf_area());
-            }
-        }
-    }
-
-    // indirect sampling
-    BxDFSample s = bxdf->sample(closest.normal, -ray.get_direction());
-    Vec3 f_indirect =
-        bxdf->evaluate(closest.normal, s.dir, -ray.get_direction());
-    float cos_theta = closest.normal.dot(s.dir);
-
-    Ray bounce_ray(closest.point + closest.normal * EPS, s.dir);
-    Vec3 incoming = trace(bounce_ray, sc, depth - 1);
-
-    return emitted + f_direct + f_indirect * incoming * cos_theta / s.pdf;
+    plane_g green_wall = {2, -size / 2.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, size, size};
+    ps.emplace_back(green_wall);
+    
+    return ps;
 }
 
-Scene build_cornell_box() {
-    Scene sc;
 
-    // create sphere
-    float radius = 18.0f;
-    auto mat_sphere = std::make_shared<LambertianMaterial>(Vec3(1.0f));
-    sc.add_object(std::make_unique<Sphere>(mat_sphere,
-                                           Vec3(0.0f, -radius, 0.0f), radius));
+std::vector<sphere_g> generate_balls() {
+    std::vector<sphere_g> ps;
+    sphere_g s1 = {6, 0.0f, -35.0f, 0.0f, 15.0f};
+    ps.emplace_back(s1);
 
-    // create light
-    auto mat_light = std::make_shared<LambertianMaterial>(Vec3(1.0f));
-    mat_light->emission = Vec3(1.0f);
-    mat_light->emission_strength = 10.0f;
-    sc.add_light(std::make_unique<Light>(mat_light, Vec3(0.0, 49.9, 0.0),
-                                         Vec3(0.0, 1.0, 0.0), 20.0f, 20.0f));
+    sphere_g s2 = {5, 25.0f, -35.0f, -25.0f, 15.0f};
+    ps.emplace_back(s2);
 
-    // create box walls, floor, and ceiling
-    float size = 100.0f;
-    auto mat_white = std::make_shared<LambertianMaterial>(Vec3(1.0f));
-    auto mat_red = std::make_shared<LambertianMaterial>(Vec3(1.0f, 0.0f, 0.0f));
-    auto mat_green =
-        std::make_shared<LambertianMaterial>(Vec3(0.0f, 1.0f, 0.0f));
-    sc.add_object(std::make_unique<Plane>(mat_white, Vec3(0.0, size / 2.0, 0.0),
-                                          Vec3(0.0, 1.0, 0.0), size,
-                                          size));  // ceiling
-    sc.add_object(
-        std::make_unique<Plane>(mat_white, Vec3(0.0, -size / 2.0, 0.0),
-                                Vec3(0.0, 1.0, 0.0), size, size));  // floor
-    sc.add_object(std::make_unique<Plane>(mat_white, Vec3(0.0, 0.0, size / 2.0),
-                                          Vec3(0.0, 0.0, 1.0), size,
-                                          size));  // back wall
-    sc.add_object(std::make_unique<Plane>(mat_red, Vec3(size / 2.0, 0.0f, 0.0f),
-                                          Vec3(1.0, 0.0, 0.0), size,
-                                          size));  // red wall
-    sc.add_object(std::make_unique<Plane>(
-        mat_green, Vec3(-size / 2.0, 0.0f, 0.0f), Vec3(1.0, 0.0, 0.0), size,
-        size));  // green wall
+    sphere_g s3 = {4, -25.0f, -35.0f, 25.0f, 15.0f};
+    ps.emplace_back(s3);
 
-    return sc;
+    return ps;
+}
+
+
+std::vector<material_g> generate_materials() {
+    std::vector<material_g> mats;
+    material_g white = {LAMBERTIAN, Vec3(1.0f), Vec3(0.0f), 0.0f};
+    mats.emplace_back(white);
+    material_g red = {LAMBERTIAN, Vec3(1.0f, 0.0f, 0.0f), Vec3(0.0f), 0.0f};
+    mats.emplace_back(red);
+    material_g green = {LAMBERTIAN, Vec3(0.0f, 1.0f, 0.0f), Vec3(0.0f), 0.0f};
+    mats.emplace_back(green);
+    material_g light = {LAMBERTIAN, Vec3(1.0f), Vec3(1.0f, 1.0f, 1.0f), 3.0f};
+    mats.emplace_back(light);
+    material_g metal = {METAL, Vec3(1.0f), Vec3(1.0f, 0.0f, 1.0f), 0.0f};
+    mats.emplace_back(metal);
+    material_g glass = {GLASS, Vec3(1.0f, 1.0f, 1.0f), Vec3(0.0f), 0.0f};
+    mats.emplace_back(glass);
+    material_g yellow = {LAMBERTIAN, Vec3(1.0f, 1.0f, 0.0f), Vec3(0.0f), 0.0f};
+    mats.emplace_back(yellow);
+
+    return mats;
+}
+
+std::vector<light_g> generate_lights() {
+    std::vector<light_g> lights;
+    light_g l1 = {3, 0.0f, 49.9f, 0.0f, 0.0f, 1.0f, 0.0f, 30.0f, 30.0f};
+    lights.emplace_back(l1);
+
+    return lights;
 }
 
 int main() {
     scene_params sp;
-    Camera camera(Vec3(0.0f, 0.0f, -190.0),  // position
+    
+    auto materials = generate_materials();
+    sp.materials = materials.data();
+    sp.num_materials = materials.size();
+
+    auto planes = generate_cornell_box();
+    sp.planes = planes.data();
+    sp.num_planes = planes.size();
+
+    auto spheres = generate_balls();
+    sp.spheres = spheres.data();
+    sp.num_spheres = spheres.size();
+
+    auto lights = generate_lights();
+    sp.lights = lights.data();
+    sp.num_lights = lights.size();
+    
+    Camera cam(Vec3(0.0f, 0.0f, -190.0),  // position
                 Vec3(0.0f, 0.0f, 0.0f),    // target
                 Vec3(0.0f, 1.0f, 0.0f),    // up
                 39.3f,                     // fov
                 sp.width, sp.height);
-    Scene scene = build_cornell_box();
 
-    float* frame_buffer = render_gpu(
-        camera, 
-        scene,
-        sp
-    );
+    float* frame_buffer = render_gpu(cam, sp);
 
     // write to png
     std::vector<uint8_t> out(sp.width * sp.height * 3);

@@ -69,6 +69,11 @@ class Vec3 {
     HD Vec3 operator-() const {
         return Vec3(-x, -y, -z);  // returns opposite of direction
     }
+
+    HD Vec3 operator-(float scalar) {
+        return Vec3(x - scalar, y - scalar, z - scalar);
+    }
 };
 
-inline Vec3 operator*(float scalar, const Vec3 &v) { return v * scalar; }
+HD inline Vec3 operator*(float scalar, const Vec3 &v) { return v * scalar; }
+HD inline Vec3 operator-(float scalar, const Vec3 &v) { return v - scalar; }
