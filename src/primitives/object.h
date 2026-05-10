@@ -6,17 +6,17 @@
 #include "shading/material.h"
 
 struct hit_result {
-    float t;
-    Vec3 point;
-    Vec3 normal;
-    bool hit{false};
+  float t;
+  Vec3 point;
+  Vec3 normal;
+  bool hit{false};
 };
 
 class Object {
-  public:
-    std::shared_ptr<Material> mat;
-    virtual hit_result hit(const Ray &ray) = 0;
-    Object() = default;
-    Object(std::shared_ptr<Material> mat) : mat(mat) {}
-    virtual ~Object() = default;
+public:
+  std::shared_ptr<Material> mat;
+  virtual hit_result hit(const Ray &ray) = 0;
+  Object() = default;
+  Object(std::shared_ptr<Material> mat) : mat(mat) {}
+  virtual ~Object() = default;
 };
