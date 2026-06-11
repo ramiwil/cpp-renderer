@@ -20,15 +20,59 @@ if(APPLE)
 endif()
 
 find_package(OpenMP REQUIRED)
+find_package(OpenGL REQUIRED)
+find_package(glfw3 REQUIRED)
+find_package(GLEW REQUIRED)
 
-add_executable(renderer src/main_gpu.cpp src/gpu_render.cu)
+set(IMGUI_DIR ${CMAKE_SOURCE_DIR}/vendor/imgui)
+set(IMGUI_SOURCES
+    ${IMGUI_DIR}/imgui.cpp
+    ${IMGUI_DIR}/imgui_draw.cpp
+    ${IMGUI_DIR}/imgui_tables.cpp
+    ${IMGUI_DIR}/imgui_widgets.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
+)
+
+# renderer exec
+add_executable(renderer src/main_gpu.cpp src/gpu_render.cu ${IMGUI_SOURCES})
 
 target_include_directories(renderer PRIVATE src)
-target_include_directories(renderer SYSTEM PRIVATE vendor)
+target_include_directories(renderer SYSTEM PRIVATE 
+	vendor
+	${IMGUI_DIR}
+	${IMGUI_DIR}/backends
+)
 
 target_compile_options(renderer PRIVATE -Wall -Wextra -O2)
 
-target_link_libraries(renderer PRIVATE OpenMP::OpenMP_CXX)
+target_link_libraries(renderer PRIVATE 
+	OpenMP::OpenMP_CXX
+	OpenGL::GL
+	glfw
+    GLEW::GLEW
+)
+
+# interactive renderer exec
+add_executable(renderer_interactive src/main_interactive.cpp src/gpu_render.cu ${IMGUI_SOURCES})
+
+target_include_directories(renderer_interactive PRIVATE src)
+target_include_directories(renderer_interactive SYSTEM PRIVATE
+    vendor
+    ${IMGUI_DIR}
+    ${IMGUI_DIR}/backends
+)
+
+target_include_directories(renderer_interactive PRIVATE ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+
+target_compile_options(renderer_interactive PRIVATE -Wall -Wextra -O2)
+
+target_link_libraries(renderer_interactive PRIVATE
+    OpenMP::OpenMP_CXX
+    OpenGL::GL
+    glfw
+    GLEW::GLEW
+)
 
 # Run target
 add_custom_target(run
@@ -43,6 +87,7 @@ if(CLANG_FORMAT)
     file(GLOB_RECURSE ALL_SOURCE_FILES
         ${CMAKE_SOURCE_DIR}/src/*.cpp
         ${CMAKE_SOURCE_DIR}/src/*.h
+		${CMAKE_SOURCE_DIR}/src/*.cu
     )
     list(FILTER ALL_SOURCE_FILES EXCLUDE REGEX "stb_image_write\\.h$")
     add_custom_target(format
