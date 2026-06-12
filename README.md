@@ -37,8 +37,8 @@ TBD
 ## Roadmap
 
 - ~~Cosine-weighted hemisphere sampling (Lambertian BRDF)~~ ✓
-- Mirror reflection and metallic materials
-- Glass / dielectrics
+- ~~Mirror reflection and metallic materials~~
+- ~~Glass / dielectrics~~
 - Multiple importance sampling (MIS)
 - GGX microfacet BRDF
 - Bounding volume hierarchy (BVH) for sublinear ray-object intersection

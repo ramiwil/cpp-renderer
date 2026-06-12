@@ -76,8 +76,8 @@ target_link_libraries(renderer_interactive PRIVATE
 
 # Run target
 add_custom_target(run
-    COMMAND renderer
-    DEPENDS renderer
+    COMMAND renderer_interactive
+    DEPENDS renderer_interactive
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 

@@ -214,10 +214,8 @@ int main() {
 
 		cudaGraphicsMapResources(1, &cuda_pbo, 0);
 		size_t num_bytes;
-		// cudaMemset(d_output, 0, size);
 		float *d_output;
 		cudaGraphicsResourceGetMappedPointer((void **)&d_output, &num_bytes, cuda_pbo);
-		// cudaGraphicsResourceGetMappedPointer((void **)&accum_buffer_d, &num_bytes, cuda_pbo);
 
 		render_gpu_interop(d_output, accum_buffer_d, num_frames, d_states, cam, sp);
 
@@ -241,6 +239,7 @@ int main() {
 	}
 
 	free_d_mem(d_states);
+	free_d_mem(accum_buffer_d);
 	free_d_mem(sp.materials);
 	free_d_mem(sp.planes);
 	free_d_mem(sp.spheres);
